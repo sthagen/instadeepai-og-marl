@@ -12,17 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import numpy as np
+from gymnasium.spaces import Box, Discrete
 from pettingzoo.sisl import pursuit_v4
-from gymnasium.spaces import Discrete, Box
 from supersuit import black_death_v3
+
+from og_marl.environments.base import Observations
 from og_marl.environments.pettingzoo_base import PettingZooBase
 
 
 class Pursuit(PettingZooBase):
+
     """Environment wrapper for Pursuit."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor for Pursuit"""
         self._environment = black_death_v3(pursuit_v4.parallel_env())
         self.possible_agents = self._environment.possible_agents
@@ -30,29 +34,26 @@ class Pursuit(PettingZooBase):
         self._obs_dim = (7, 7, 3)
 
         self.action_spaces = {agent: Discrete(self._num_actions) for agent in self.possible_agents}
-        self.observation_spaces = {agent: Box(-np.inf, np.inf, (*self._obs_dim,)) for agent in self.possible_agents}
+        self.observation_spaces = {
+            agent: Box(-np.inf, np.inf, (*self._obs_dim,)) for agent in self.possible_agents
+        }
 
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
 
-    def _convert_observations(self, observations):
+    def _convert_observations(self, observations: Observations, done: bool) -> Observations:
         """Convert observations."""
         return observations
 
-    def _create_state_representation(self, observations):
-
+    def _create_state_representation(self, observations: Observations) -> np.ndarray:
         pursuer_pos = [
-            agent.current_position()
-            for agent in self._environment.aec_env.env.env.env.pursuers
+            agent.current_position() for agent in self._environment.aec_env.env.env.env.pursuers
         ]
         evader_pos = [
-            agent.current_position()
-            for agent in self._environment.aec_env.env.env.env.evaders
+            agent.current_position() for agent in self._environment.aec_env.env.env.env.evaders
         ]
         while len(evader_pos) < 30:
             evader_pos.append(np.array([-1, -1], dtype=np.int32))
-        state = np.concatenate(tuple(pursuer_pos + evader_pos), axis=-1).astype(
-            "float32"
-        )
+        state = np.concatenate(tuple(pursuer_pos + evader_pos), axis=-1).astype("float32")
         state = state / 16  # normalize
 
-        return state
+        return state  # type: ignore

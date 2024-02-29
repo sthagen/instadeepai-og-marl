@@ -14,23 +14,33 @@
 
 import json
 import os
-import wandb
 import time
+from typing import Any, Dict, List, Optional
 
-class TerminalLogger:
+from chex import Numeric
 
+import wandb
+
+
+class BaseLogger:
+    def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
+        raise NotImplementedError
+
+    def close(self) -> None:
+        return
+
+
+class TerminalLogger(BaseLogger):
     def __init__(
-            self,
-            log_every=2 # seconds
+        self,
+        log_every: int = 2,  # seconds
     ):
         self._log_every = log_every
         self._ctr = 0
         self._last_log = time.time()
 
-    def write(self, logs, force=False):
-        
+    def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
         if time.time() - self._last_log > self._log_every or force:
-
             for key, log in logs.items():
                 print(f"{key}: {float(log)} |", end=" ")
             print()
@@ -40,15 +50,16 @@ class TerminalLogger:
 
         self._ctr += 1
 
-class WandbLogger:
+
+class WandbLogger(BaseLogger):
     def __init__(
         self,
-        config={},
-        project="default_project",
-        notes="",
-        tags=["default"],
-        entity=None,
-        log_every=2 # seconds
+        config: Dict = {},  # noqa: B006
+        project: str = "default_project",
+        notes: str = "",
+        tags: List = ["default"],  # noqa: B006
+        entity: Optional[str] = None,
+        log_every: int = 2,  # seconds
     ):
         wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
 
@@ -56,9 +67,7 @@ class WandbLogger:
         self._ctr = 0
         self._last_log = time.time()
 
-    def write(self, logs, force=False):
-        
-        
+    def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -71,23 +80,26 @@ class WandbLogger:
 
         self._ctr += 1
 
-    def close(self):
+    def close(self) -> None:
         wandb.finish()
 
+
 class JsonWriter:
-    """
-    Writer to create json files for reporting experiment results according to marl-eval
+
+    """Writer to create json files for reporting experiment results according to marl-eval
 
     Follows conventions from https://github.com/instadeepai/marl-eval/tree/main#usage-
     This writer was adapted from the implementation found in BenchMARL. For the original
     implementation please see https://tinyurl.com/2t6fy548
 
     Args:
+    ----
         path (str): where to write the file
         algorithm_name (str): algorithm name
         task_name (str): task name
         environment_name (str): environment name
         seed (int): random seed of the experiment
+
     """
 
     def __init__(
@@ -97,16 +109,18 @@ class JsonWriter:
         task_name: str,
         environment_name: str,
         seed: int,
+        file_name: str = "metrics.json",
+        save_to_wandb: bool = False,
     ):
         self.path = path
-        self.file_name = "metrics.json"
-        self.run_data = {"absolute_metrics": {}}
+        self.file_name = file_name
+        self.run_data: Dict[str, Any] = {"absolute_metrics": {}}
+        self._save_to_wandb = save_to_wandb
 
         # If the file already exists, load it
         if os.path.isfile(f"{self.path}/{self.file_name}"):
             with open(f"{self.path}/{self.file_name}", "r") as f:
                 data = json.load(f)
-
         else:
             # Create the logging directory if it doesn't exist
             os.makedirs(self.path, exist_ok=True)
@@ -130,18 +144,18 @@ class JsonWriter:
         timestep: int,
         key: str,
         value: float,
-        evaluation_step = None,
+        evaluation_step: Optional[int] = None,
     ) -> None:
-        """
-        Writes a step to the json reporting file
+        """Writes a step to the json reporting file
 
         Args:
+        ----
             timestep (int): the current environment timestep
             key (str): the metric that should be logged
             value (str): the value of the metric that should be logged
             evaluation_step (int): the evaluation step
-        """
 
+        """
         logging_prefix, *metric_key = key.split("/")
         metric_key = "/".join(metric_key)
 
@@ -162,3 +176,7 @@ class JsonWriter:
 
         with open(f"{self.path}/{self.file_name}", "w") as f:
             json.dump(self.data, f, indent=4)
+
+    def close(self) -> None:
+        if self._save_to_wandb:
+            wandb.save(f"{self.path}/{self.file_name}")

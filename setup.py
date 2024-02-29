@@ -15,31 +15,31 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='OG-MARL',
-    version='0.0.2',
-    author='Claude Formanek',
-    author_email='c.formanek@instadeep.com',
+    name="OG-MARL",
+    version="0.0.2",
+    author="Claude Formanek",
+    author_email="c.formanek@instadeep.com",
     packages=find_packages(),
-    url='https://sites.google.com/view/og-marl',
-    license='',
-    description='Off-the-Grid MARL: Datasets and Baselines for Offline \
-        Multi-Agent Reinforcement Learning',
+    url="https://sites.google.com/view/og-marl",
+    license="",
+    description="Off-the-Grid MARL: Datasets and Baselines for Offline \
+        Multi-Agent Reinforcement Learning",
     long_description="",
     install_requires=[
         "numpy",
         "dm_tree",
-        "tensorflow==2.8.*",
+        "tensorflow==2.15.0.*",
         "tensorflow_io",
-        "tensorflow_probability==0.16.*",
+        "tensorflow_probability==0.23.0",
         "dm_sonnet",
         "wandb",
-        "cpprb",
         "absl-py",
         "gymnasium",
-        "requests"
+        "requests",
+        "jax[cpu]==0.4.20",
+        # "flashbax==0.1.0", # install post
     ],
     extras_require={
-        'jax': ['flashbax', 'optax', "jax", "flax", "orbax-checkpoint"],
-    }
-
+        "jax": ["flashbax", "optax", "jax", "flax", "orbax-checkpoint"],
+    },
 )

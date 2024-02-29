@@ -5,8 +5,12 @@ launch.json
 .vscode
 json_logs
 vaults
+vaults_unprocessed
+development
+SMAC_Maps
 logs
 __MACOSX
+3.9
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -137,3 +141,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# MacOS
+*.DS_Store

@@ -12,113 +12,104 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any, Dict
+
+import flashbax as fbx
+import jax
+import jax.numpy as jnp
 import numpy as np
-import cpprb
 import tree
+from chex import Array
+from flashbax.buffers.trajectory_buffer import TrajectoryBufferState
+from flashbax.vault import Vault
 
-class SequenceCPPRB:
+Experience = Dict[str, Array]
 
-    def __init__(self, environment, sequence_length=20, max_size=10_000, batch_size=32):
-        self._environment = environment
+
+class FlashbaxReplayBuffer:
+    def __init__(
+        self,
+        sequence_length: int,
+        max_size: int = 50_000,
+        batch_size: int = 32,
+        sample_period: int = 1,
+        seed: int = 42,
+    ):
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
-        self._info_spec = self._environment.info_spec
 
-        cpprb_env_dict = {}
-        sequence_buffer = {}
-        for agent in environment.possible_agents:
-            obs_shape = self._environment.observation_spaces[agent].shape
-            act_shape = self._environment.action_spaces[agent].shape
-
-            cpprb_env_dict[f"{agent}_observations"] = {"shape": (sequence_length, *obs_shape)}
-            cpprb_env_dict[f"{agent}_actions"] = {"shape": (sequence_length, *act_shape)}
-            cpprb_env_dict[f"{agent}_rewards"] = {"shape": (sequence_length,)}
-            cpprb_env_dict[f"{agent}_terminals"] = {"shape": (sequence_length,)}
-            cpprb_env_dict[f"{agent}_truncations"] = {"shape": (sequence_length,)}
-
-            sequence_buffer[f"{agent}_observations"] = np.zeros((sequence_length, *obs_shape), "float32")
-            sequence_buffer[f"{agent}_actions"] = np.zeros((sequence_length, *act_shape), "float32")
-            sequence_buffer[f"{agent}_rewards"] = np.zeros((sequence_length,), "float32")
-            sequence_buffer[f"{agent}_terminals"] = np.zeros((sequence_length,), "float32")
-            sequence_buffer[f"{agent}_truncations"] = np.zeros((sequence_length,), "float32")
-
-            if "legals" in self._info_spec:
-                legals_shape = self._info_spec["legals"][agent].shape
-                cpprb_env_dict[f"{agent}_legals"] = {"shape": (sequence_length, *legals_shape)}
-                sequence_buffer[f"{agent}_legals"] = np.zeros((sequence_length, *legals_shape), "float32")
-        
-        cpprb_env_dict["mask"] = {"shape": (sequence_length,)}
-        sequence_buffer["mask"] = np.zeros((sequence_length,), "float32")
-
-        if "state" in self._info_spec:
-            state_shape = self._info_spec["state"].shape
-
-            cpprb_env_dict["state"] = {"shape": (sequence_length, *state_shape)}
-            sequence_buffer["state"] = np.zeros((sequence_length, *state_shape), "float32")
-
-        self._cpprb = cpprb.ReplayBuffer(
-            max_size,
-            env_dict =cpprb_env_dict,
-            default_dtype=np.float32
+        # Flashbax buffer
+        self._replay_buffer = fbx.make_trajectory_buffer(
+            add_batch_size=1,
+            sample_batch_size=batch_size,
+            sample_sequence_length=sequence_length,
+            period=sample_period,
+            min_length_time_axis=1,
+            max_size=max_size,
         )
 
-        self._sequence_buffer = sequence_buffer
+        self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
+        self._buffer_add_fn = jax.jit(self._replay_buffer.add)
 
-        self._t = 0
+        self._buffer_state: TrajectoryBufferState = None
+        self._rng_key = jax.random.PRNGKey(seed)
 
-    def add(self, observations, actions, rewards, terminals, truncations, infos):
+    def add(
+        self,
+        observations: Dict[str, np.ndarray],
+        actions: Dict[str, np.ndarray],
+        rewards: Dict[str, np.ndarray],
+        terminals: Dict[str, np.ndarray],
+        truncations: Dict[str, np.ndarray],
+        infos: Dict[str, Any],
+    ) -> None:
+        timestep = {
+            "observations": observations,
+            "actions": actions,
+            "rewards": rewards,
+            "terminals": terminals,
+            "truncations": truncations,
+            "infos": infos,
+        }
 
-        for agent in self._environment.possible_agents:
-            self._sequence_buffer[f"{agent}_observations"][self._t] = np.array(observations[agent], "float32")
-            self._sequence_buffer[f"{agent}_actions"][self._t] = np.array(actions[agent], "float32")
-            self._sequence_buffer[f"{agent}_rewards"][self._t] = np.array(rewards[agent], "float32")
-            self._sequence_buffer[f"{agent}_terminals"][self._t] = np.array(terminals[agent], "float32")
-            self._sequence_buffer[f"{agent}_truncations"][self._t] = np.array(truncations[agent], "float32")
+        if self._buffer_state is None:
+            self._buffer_state = self._replay_buffer.init(timestep)
 
-            if "legals" in infos:
-                self._sequence_buffer[f"{agent}_legals"][self._t] = np.array(infos["legals"][agent], "float32")
+        timestep = tree.map_structure(
+            lambda x: jnp.expand_dims(jnp.expand_dims(jnp.array(x), 0), 0), timestep
+        )  # add batch & time dims
+        self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
-        self._sequence_buffer["mask"][self._t] = np.array(1, "float32")
+    def sample(self) -> Experience:
+        self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
+        batch = self._buffer_sample_fn(self._buffer_state, sample_key)
+        return batch.experience  # type: ignore
 
-        if "state" in infos:
-            self._sequence_buffer["state"][self._t] = np.array(infos["state"], "float32")
+    def populate_from_vault(
+        self, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "vaults"
+    ) -> bool:
+        try:
+            self._buffer_state = Vault(
+                vault_name=f"{env_name}/{scenario_name}.vlt",
+                vault_uid=dataset_name,
+                rel_dir=rel_dir,
+            ).read()
 
-        self._t += 1
+            # Recreate the buffer and associated pure functions
+            self._max_size = self._buffer_state.current_index
+            self._replay_buffer = fbx.make_trajectory_buffer(
+                add_batch_size=1,
+                sample_batch_size=self._batch_size,
+                sample_sequence_length=self._sequence_length,
+                period=1,
+                min_length_time_axis=1,
+                max_size=self._max_size,
+            )
+            self._buffer_sample_fn = jax.jit(self._replay_buffer.sample)
+            self._buffer_add_fn = jax.jit(self._replay_buffer.add)
 
-        if self._t == self._sequence_length:
-            self._push_to_cpprb()
-            self._t = 0
+            return True
 
-    def end_of_episode(self):
-        if self._t > 0:
-            self._zero_pad()
-            self._push_to_cpprb()
-
-        self._cpprb.on_episode_end()
-
-        self._t = 0
-
-    def populate_from_dataset(self, dataset):
-        dataset = dataset.batch(128)
-        for batch in dataset:
-            batch = tree.map_structure(lambda x: x.numpy(), batch)
-            self._cpprb.add(**batch)
-        print("Done")
-
-    def _push_to_cpprb(self):
-        self._cpprb.add(**self._sequence_buffer)
-
-    def _zero_pad(self):
-        for key, value in self._sequence_buffer.items():
-            trailing_dims = value.shape[1:]
-            zero_pad = np.zeros((self._sequence_length - self._t, *trailing_dims), "float32")
-            self._sequence_buffer[key][self._t:] = zero_pad
-
-    def __iter__(self):
-        return self
-    
-    def __next__(self):
-        cpprb_sample = self._cpprb.sample(self._batch_size)
-
-        return cpprb_sample
+        except ValueError:
+            return False
