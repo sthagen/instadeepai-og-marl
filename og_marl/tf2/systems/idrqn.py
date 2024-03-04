@@ -118,7 +118,7 @@ class IDRQNSystem(BaseMARLSystem):
             lambda x: x.numpy(), actions
         )  # convert to numpy and squeeze batch dim
 
-    @tf.function(jit_compile=True)
+    #@tf.function(jit_compile=True)
     def _tf_select_actions(
         self,
         env_step_ctr: int,
@@ -149,7 +149,7 @@ class IDRQNSystem(BaseMARLSystem):
             epsilon = tf.maximum(1.0 - self._eps_dec * env_step_ctr, self._eps_min)
 
             greedy_probs = tf.one_hot(greedy_action, masked_q_values.shape[-1])
-            explore_probs = agent_legal_actions / tf.reduce_sum(agent_legal_actions)
+            explore_probs = tf.cast(agent_legal_actions / tf.reduce_sum(agent_legal_actions), dtype=tf.float32)
             probs = (1.0 - epsilon) * greedy_probs + epsilon * explore_probs
             probs = tf.expand_dims(probs, axis=0)
 

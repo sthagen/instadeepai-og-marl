@@ -14,7 +14,7 @@
 from absl import app, flags
 
 from og_marl.environments.utils import get_environment
-from og_marl.loggers import JsonWriter, WandbLogger
+from og_marl.loggers import JsonWriter, TerminalLogger, WandbLogger
 from og_marl.offline_dataset import download_and_unzip_vault
 from og_marl.replay_buffers import FlashbaxReplayBuffer
 from og_marl.tf2.systems import get_system
@@ -23,9 +23,9 @@ from og_marl.tf2.utils import set_growing_gpu_memory
 set_growing_gpu_memory()
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("env", "smac_v1", "Environment name.")
-flags.DEFINE_string("scenario", "3m", "Environment scenario name.")
-flags.DEFINE_string("dataset", "Good", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
+flags.DEFINE_string("env", "rware", "Environment name.")
+flags.DEFINE_string("scenario", "tiny-4ag", "Environment scenario name.")
+flags.DEFINE_string("dataset", "Replay", "Dataset type.: 'Good', 'Medium', 'Poor' or 'Replay' ")
 flags.DEFINE_string("system", "dbc", "System name.")
 flags.DEFINE_integer("seed", 42, "Seed.")
 flags.DEFINE_float("trainer_steps", 5e4, "Number of training steps.")
@@ -52,7 +52,7 @@ def main(_):
         print("Vault not found. Exiting.")
         return
 
-    logger = WandbLogger(project="og-marl-baselines", config=config)
+    logger = TerminalLogger() #WandbLogger(project="og-marl-baselines", config=config)
 
     json_writer = JsonWriter(
         "logs",

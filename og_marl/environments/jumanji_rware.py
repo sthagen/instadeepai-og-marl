@@ -12,51 +12,91 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base wrapper for Jumanji environments."""
+import time
 from typing import Any, Dict
 
-import numpy as np
 import jax
+import jax.numpy as jnp
+import jumanji
+import numpy as np
+from jumanji.environments.routing.robot_warehouse.generator import RandomGenerator
 
 from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
+task_configs = {
+    "tiny-4ag": {
+        "column_height": 8,
+        "shelf_rows": 1,
+        "shelf_columns": 3,
+        "num_agents": 4,
+        "sensor_range": 1,
+        "request_queue_size": 4,
+    }
+}
 
-class JumanjiBase(BaseEnvironment):
+class JumanjiRware(BaseEnvironment):
 
     """Environment wrapper for Jumanji environments."""
 
-    def __init__(self) -> None:
+    def __init__(self, scenario_name = "tiny-4ag", seed = 0) -> None:
         """Constructor."""
-        self._environment = ...
+        self._environment = jumanji.make(
+            "RobotWarehouse-v0",
+            generator=RandomGenerator(**task_configs[scenario_name]),
+        )
         self._num_agents = self._environment.num_agents
+        self._num_actions = int(self._environment.action_spec().num_values[0])
         self.possible_agents = [f"agent_{i}" for i in range(self._num_agents)]
         self._state = ...  # Jumanji environment state
 
-        self.info_spec: Dict[str, Any] = {}
+        self.info_spec: Dict[str, Any] = {}  # TODO add global state spec
+
+        self._key = jax.random.PRNGKey(seed)
+
+        self._env_step = jax.jit(self._environment.step, donate_argnums=0)
 
     def reset(self) -> ResetReturn:
         """Resets the env."""
         # Reset the environment
-        self.key, sub_key = jax.random.split(self.key)
+        self._key, sub_key = jax.random.split(self._key)
         self._state, timestep = self._environment.reset(sub_key)
 
-        # Infos
-        info = {"state": env_state}
+        observations = {agent: np.asarray(
+            timestep.observation.agents_view[i], dtype=np.float32)
+            for i, agent in enumerate(self.possible_agents)
+        }
+        legals = {agent: np.asarray(
+            timestep.observation.action_mask[i], dtype=np.int32)
+            for i, agent in enumerate(self.possible_agents)
+        }
 
-        # Convert observations to OLT format
-        observations = self._convert_observations(observations, False)
+        # Infos
+        info = {"legals": legals}
 
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
         """Steps in env."""
-        actions = ...  # convert actions
+        actions = jnp.array(list(actions.values())).squeeze(-1)
         # Step the environment
-        self._state, timestep = self._env.step(self._state, actions)
+        self._state, timestep = self._env_step(self._state, actions)
 
-        # Global state
-        env_state = self._create_state_representation(observations)
+        observations = {agent: np.asarray(
+            timestep.observation.agents_view[i], dtype=np.float32)
+            for i, agent in enumerate(self.possible_agents)
+        }
+        legals = {agent: np.asarray(
+            timestep.observation.action_mask[i], dtype=np.int32)
+            for i, agent in enumerate(self.possible_agents)
+        }
+        rewards = {agent: timestep.reward for agent in self.possible_agents}
+        terminals = {agent: timestep.last() for agent in self.possible_agents}
+        truncations = {agent: False for agent in self.possible_agents}
+
+        # # Global state
+        # env_state = self._create_state_representation(observations)
 
         # Extra infos
-        info = {"state": env_state}
+        info = {"legals": legals}
 
         return observations, rewards, terminals, truncations, info

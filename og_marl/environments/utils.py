@@ -43,5 +43,9 @@ def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
         from og_marl.environments.voltage_control import VoltageControlEnv
 
         return VoltageControlEnv()
+    elif env_name == "rware":
+        from og_marl.environments.jumanji_rware import JumanjiRware
+
+        return JumanjiRware(scenario)
     else:
         raise ValueError("Environment not recognised.")

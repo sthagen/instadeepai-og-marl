@@ -108,10 +108,11 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
             probs = tf.nn.softmax(logits)
 
             if legal_actions is not None:
-                agent_legals = tf.expand_dims(legal_actions[agent], axis=0)
+                agent_legals = tf.cast(tf.expand_dims(legal_actions[agent], axis=0), "float32")
                 probs = (probs * agent_legals) / tf.reduce_sum(
                     probs * agent_legals
                 )  # mask and renorm
+                probs = tf.cast(probs, "float32")
 
             action = tfp.distributions.Categorical(probs=probs).sample(1)
 
@@ -124,7 +125,7 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         logs = self._tf_train_step(experience)
         return logs  # type: ignore
 
-    @tf.function(jit_compile=True)
+    @tf.function()#jit_compile=True)
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
         # Unpack the relevant quantities
         observations = experience["observations"]
