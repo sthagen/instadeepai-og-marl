@@ -29,6 +29,14 @@ class ExperienceRecorder:
     def __init__(
         self, environment: BaseEnvironment, vault_name: str, write_to_vault_every: int = 10_000
     ):
+        """Constructor for the ExperienceRecorder.
+
+        Args:
+            environment (BaseEnvironment): environment that is being wrapped.
+            vault_name (str): name of the vault to write to.
+            write_to_vault_every (int, optional):
+                how often to write to the vault. Defaults to 10_000.
+        """
         self._environment = environment
         self._buffer = fbx.make_flat_buffer(
             max_length=2 * 10_000,
@@ -53,6 +61,19 @@ class ExperienceRecorder:
         truncations: Dict[str, np.ndarray],
         infos: Dict[str, Any],
     ) -> Dict[str, Any]:
+        """Packa an incoming timestep into a dictionary.
+
+        Args:
+            observations (Dict[str, np.ndarray]): Observations from the environment.
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+            rewards (Dict[str, np.ndarray]): Rewards received by the agents.
+            terminals (Dict[str, np.ndarray]): Whether the agents have terminated.
+            truncations (Dict[str, np.ndarray]): Whether the agents have been truncated. TODO
+            infos (Dict[str, Any]): Extra info from the environment.
+
+        Returns:
+            Dict[str, Any]: _description_
+        """
         packed_timestep = {
             "observations": observations,
             "actions": actions,
@@ -65,6 +86,11 @@ class ExperienceRecorder:
         return packed_timestep
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         observations, infos = self._environment.reset()
 
         self._observations = observations
@@ -73,6 +99,14 @@ class ExperienceRecorder:
         return observations, infos
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         observations, rewards, terminals, truncations, infos = self._environment.step(actions)
 
         packed_timestep = self._pack_timestep(
@@ -113,7 +147,14 @@ class ExperienceRecorder:
         return observations, rewards, terminals, truncations, infos
 
     def __getattr__(self, name: str) -> Any:
-        """Expose any other attributes of the underlying environment."""
+        """Expose any other attributes of the underlying environment.
+
+        Args:
+            name (str): name of the attribute.
+
+        Returns:
+            Any: the attribute.
+        """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:
@@ -121,11 +162,24 @@ class ExperienceRecorder:
 
 
 class Dtype:
+    """TODO"""
+
     def __init__(self, environment: BaseEnvironment, dtype: str):
+        """Constructor for the Dtype wrapper.
+
+        Args:
+            environment (BaseEnvironment): environment that is being wrapped.
+            dtype (str): data type to cast the observations to.
+        """
         self._environment = environment
         self._dtype = dtype
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         observations = self._environment.reset()
 
         if isinstance(observations, tuple):
@@ -139,6 +193,14 @@ class Dtype:
         return observations, infos
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         next_observations, rewards, terminals, truncations, infos = self._environment.step(actions)
 
         for agent, observation in next_observations.items():
@@ -147,7 +209,14 @@ class Dtype:
         return next_observations, rewards, terminals, truncations, infos
 
     def __getattr__(self, name: str) -> Any:
-        """Expose any other attributes of the underlying environment."""
+        """Expose any other attributes of the underlying environment.
+
+        Args:
+            name (str): name of the attribute.
+
+        Returns:
+            Any: the attribute.
+        """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:
@@ -155,7 +224,14 @@ class Dtype:
 
 
 class PadObsandActs:
+    """TODO"""
+
     def __init__(self, environment: BaseEnvironment):
+        """Constructor for the PadObsandActs wrapper.
+
+        Args:
+            environment (BaseEnvironment): environment that is being wrapped.
+        """
         self._environment = environment
 
         self._obs_dim = 0
@@ -172,6 +248,11 @@ class PadObsandActs:
                 self._obs_dim = obs_dim
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         observations = self._environment.reset()
 
         if isinstance(observations, tuple):
@@ -189,6 +270,14 @@ class PadObsandActs:
         return observations, infos
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         actions = {
             agent: action[: self._environment.action_spaces[agent].shape[0]]
             for agent, action in actions.items()
@@ -205,7 +294,14 @@ class PadObsandActs:
         return next_observations, rewards, terminals, truncations, infos
 
     def __getattr__(self, name: str) -> Any:
-        """Expose any other attributes of the underlying environment."""
+        """Expose any other attributes of the underlying environment.
+
+        Args:
+            name (str): name of the attribute.
+
+        Returns:
+            Any: the attribute.
+        """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:

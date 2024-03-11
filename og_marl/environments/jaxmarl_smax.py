@@ -18,15 +18,21 @@ import jax
 import numpy as np
 from jaxmarl import make
 from jaxmarl.environments.smax import map_name_to_scenario
+
 from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 
 class SMAX(BaseEnvironment):
 
-    """Environment wrapper for Jumanji environments."""
+    """Environment wrapper for SMAX environments from JaxMARL."""
 
     def __init__(self, scenario_name: str = "3m", seed: int = 0) -> None:
-        """Constructor."""
+        """Constructor.
+
+        Args:
+            scenario_name (str, optional): name of scenario in SMAX. Defaults to "3m".
+            seed (int, optional): random seed initialisation. Defaults to 0.
+        """
         scenario = map_name_to_scenario(scenario_name)
 
         self._environment = make(
@@ -51,7 +57,11 @@ class SMAX(BaseEnvironment):
         self._env_step = jax.jit(self._environment.step)
 
     def reset(self) -> ResetReturn:
-        """Resets the env."""
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         # Reset the environment
         self._key, sub_key = jax.random.split(self._key)
         obs, self._state = self._environment.reset(sub_key)
@@ -71,7 +81,14 @@ class SMAX(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
-        """Steps in env."""
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         self._key, sub_key = jax.random.split(self._key)
 
         # Step the environment

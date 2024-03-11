@@ -27,7 +27,7 @@ class Pursuit(PettingZooBase):
     """Environment wrapper for Pursuit."""
 
     def __init__(self) -> None:
-        """Constructor for Pursuit"""
+        """Constructor."""
         self._environment = black_death_v3(pursuit_v4.parallel_env())
         self.possible_agents = self._environment.possible_agents
         self._num_actions = 5
@@ -41,10 +41,26 @@ class Pursuit(PettingZooBase):
         self.info_spec = {"state": np.zeros(8 * 2 + 30 * 2, "float32")}
 
     def _convert_observations(self, observations: Observations, done: bool) -> Observations:
-        """Convert observations."""
+        """Convert observations to OLT format. TODO
+
+        Args:
+            observations (Observations): _description_
+            done (bool): _description_
+
+        Returns:
+            Observations: _description_
+        """
         return observations
 
     def _create_state_representation(self, observations: Observations) -> np.ndarray:
+        """Create state representation from observations.
+
+        Args:
+            observations (Observations): Observations from the environment.
+
+        Returns:
+            np.ndarray: State representation.
+        """
         pursuer_pos = [
             agent.current_position() for agent in self._environment.aec_env.env.env.env.pursuers
         ]

@@ -44,10 +44,15 @@ task_configs = {
 
 class JumanjiLBF(BaseEnvironment):
 
-    """Environment wrapper for Jumanji environments."""
+    """Environment wrapper for Jumanji's Level-based Foraging environment."""
 
     def __init__(self, scenario_name: str = "2s-8x8-2p-2f-coop", seed: int = 0) -> None:
-        """Constructor."""
+        """Constructor.
+
+        Args:
+            scenario_name (str, optional): name of scenario in LBF. Defaults to "2s-8x8-2p-2f-coop".
+            seed (int, optional): random seed initialisation. Defaults to 0.
+        """
         self._environment = jumanji.make(
             "LevelBasedForaging-v0",
             time_limit=100,
@@ -65,8 +70,12 @@ class JumanjiLBF(BaseEnvironment):
         self._env_step = jax.jit(self._environment.step)
 
     def reset(self) -> ResetReturn:
-        """Resets the env."""
-        # Reset the environment
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
+        # Resets the underlying environment
         self._key, sub_key = jax.random.split(self._key)
         self._state, timestep = self._environment.reset(sub_key)
 
@@ -85,7 +94,14 @@ class JumanjiLBF(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
-        """Steps in env."""
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         actions = jnp.array([actions[agent] for agent in self.possible_agents])
         # Step the environment
         self._state, timestep = self._env_step(self._state, actions)

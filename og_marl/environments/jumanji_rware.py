@@ -44,10 +44,16 @@ task_configs = {
 
 class JumanjiRware(BaseEnvironment):
 
-    """Environment wrapper for Jumanji environments."""
+    """Environment wrapper for Jumanji's Robot-Warehouse environments."""
 
     def __init__(self, scenario_name: str = "tiny-4ag", seed: int = 0) -> None:
-        """Constructor."""
+        """Constructor.
+
+        Args:
+            scenario_name (str, optional):
+                name of scenario in Robot-Warehouse. Defaults to "tiny-4ag".
+            seed (int, optional): random seed initialisation. Defaults to 0.
+        """
         self._environment = jumanji.make(
             "RobotWarehouse-v0",
             generator=RandomGenerator(**task_configs[scenario_name]),
@@ -64,7 +70,11 @@ class JumanjiRware(BaseEnvironment):
         self._env_step = jax.jit(self._environment.step, donate_argnums=0)
 
     def reset(self) -> ResetReturn:
-        """Resets the env."""
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         # Reset the environment
         self._key, sub_key = jax.random.split(self._key)
         self._state, timestep = self._environment.reset(sub_key)
@@ -84,7 +94,14 @@ class JumanjiRware(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
-        """Steps in env."""
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         actions = jnp.array(list(actions.values()))  # .squeeze(-1)
         # Step the environment
         self._state, timestep = self._env_step(self._state, actions)

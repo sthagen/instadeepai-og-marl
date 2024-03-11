@@ -45,7 +45,14 @@ FLATLAND_MAP_CONFIGS = {
 
 
 class Flatland(BaseEnvironment):
+    """Wrapper for Flatland."""
+
     def __init__(self, map_name: str = "5_trains"):
+        """Constructor.
+
+        Args:
+            map_name (str, optional): name of scenario in Flatland. Defaults to "5_trains".
+        """
         map_config = FLATLAND_MAP_CONFIGS[map_name]
 
         self._num_actions = 5
@@ -91,6 +98,11 @@ class Flatland(BaseEnvironment):
         self.max_episode_length = map_config["max_episode_len"]
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         self._done = False
 
         observations, info = self._environment.reset()
@@ -106,6 +118,14 @@ class Flatland(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         actions = {int(agent): action.item() for agent, action in actions.items()}
 
         # Step the Flatland environment
@@ -137,6 +157,11 @@ class Flatland(BaseEnvironment):
         return next_observations, rewards, terminals, truncations, info
 
     def _get_legal_actions(self) -> Dict[str, np.ndarray]:
+        """Computes the legal actions for each agent.
+
+        Returns:
+            Dict[str, np.ndarray]: legal actions for each agent.
+        """
         legal_actions = {}
         for agent in self.possible_agents:
             agent_id = int(agent)
@@ -155,6 +180,11 @@ class Flatland(BaseEnvironment):
         return legal_actions
 
     def _make_state_representation(self) -> np.ndarray:
+        """Creates the state representation.
+
+        Returns:
+            np.ndarray: state representation.
+        """
         state = []
         for i, _ in enumerate(self.possible_agents):
             agent = self._environment.agents[i]
@@ -179,6 +209,15 @@ class Flatland(BaseEnvironment):
         observations: Dict[int, np.ndarray],
         info: Dict[str, Dict[int, np.ndarray]],
     ) -> Observations:
+        """TODO
+
+        Args:
+            observations (Dict[int, np.ndarray]):
+            info (Dict[str, Dict[int, np.ndarray]]):
+
+        Returns:
+            Observations: _description_
+        """
         new_observations = {}
         for i, agent in enumerate(self.possible_agents):
             agent_id = i

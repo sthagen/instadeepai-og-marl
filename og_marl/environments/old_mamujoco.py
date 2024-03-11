@@ -21,6 +21,17 @@ from og_marl.environments.base import BaseEnvironment, ResetReturn, StepReturn
 
 
 def get_mamujoco_args(scenario: str) -> Dict[str, Any]:
+    """Gets the environment configuration, given the scenario.
+
+    Args:
+        scenario (str): scenario name.
+
+    Raises:
+        ValueError: Not a valid mamujoco scenario.
+
+    Returns:
+        Dict[str, Any]: environment configuration, comprising the scenario and agent configuration.
+    """
     env_args = {
         "agent_obsk": 1,
         "episode_limit": 1000,
@@ -45,6 +56,11 @@ class MAMuJoCo(BaseEnvironment):
     """Environment wrapper Multi-Agent MuJoCo."""
 
     def __init__(self, scenario: str):
+        """Constructor.
+
+        Args:
+            scenario (str): scenario name.
+        """
         env_args = get_mamujoco_args(scenario)
         self._environment = MujocoMulti(env_args=env_args)
 
@@ -71,6 +87,11 @@ class MAMuJoCo(BaseEnvironment):
         self.max_episode_length = 1000
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         self._environment.reset()
 
         observations = self._environment.get_obs()
@@ -84,6 +105,14 @@ class MAMuJoCo(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         mujoco_actions = []
         for agent in self.possible_agents:
             mujoco_actions.append(actions[agent])
@@ -106,7 +135,14 @@ class MAMuJoCo(BaseEnvironment):
         return observations, rewards, terminals, trunctations, info  # type: ignore
 
     def __getattr__(self, name: str) -> Any:
-        """Expose any other attributes of the underlying environment."""
+        """Exposes attributes of the underlying environment.
+
+        Args:
+            name (str): name of the attribute.
+
+        Returns:
+            Any: the attribute.
+        """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:

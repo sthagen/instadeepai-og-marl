@@ -21,7 +21,14 @@ from og_marl.environments.base import ResetReturn, StepReturn
 
 
 def get_env_config(scenario: str) -> Dict[str, Any]:
-    """Helper method to get env_args."""
+    """Gets the environment configuration, given the scenario.
+
+    Args:
+        scenario (str): scenario name.
+
+    Returns:
+        Dict[str, Any]: environment configuration, comprising the scenario and agent configuration.
+    """
     env_args: Dict[str, Any] = {
         "agent_obsk": 1,
     }
@@ -54,12 +61,22 @@ class MAMuJoCo:
     """Environment wrapper Multi-Agent MuJoCo."""
 
     def __init__(self, scenario: str):
+        """Constructor.
+
+        Args:
+            scenario (str): scenario name.
+        """
         env_config = get_env_config(scenario)
         self._environment = gymnasium_robotics.mamujoco_v0.parallel_env(**env_config)
 
         self.info_spec = {"state": self._environment.state()}
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         observations, _ = self._environment.reset()
 
         info = {"state": self._environment.state().astype("float32")}
@@ -67,6 +84,14 @@ class MAMuJoCo:
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         observations, rewards, terminals, trunctations, _ = self._environment.step(actions)
 
         info = {"state": self._environment.state().astype("float32")}
@@ -74,7 +99,14 @@ class MAMuJoCo:
         return observations, rewards, terminals, trunctations, info
 
     def __getattr__(self, name: str) -> Any:
-        """Expose any other attributes of the underlying environment."""
+        """Exposes attributes of the underlying environment.
+
+        Args:
+            name (str): name of the attribute.
+
+        Returns:
+            Any: the attribute.
+        """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
         else:

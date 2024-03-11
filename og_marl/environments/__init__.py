@@ -19,6 +19,18 @@ from og_marl.environments.base import BaseEnvironment
 
 
 def get_environment(env_name: str, scenario: str) -> BaseEnvironment:
+    """Gets the environment object, given the environment name and scenario.
+
+    Args:
+        env_name (str): name of environment (e.g. smac_v1)
+        scenario (str): scenario name (e.g. 3m)
+
+    Raises:
+        ValueError: Unrecognised environment.
+
+    Returns:
+        BaseEnvironment: Environment object.
+    """
     if env_name == "smac_v1":
         from og_marl.environments.smacv1 import SMACv1
 

@@ -28,8 +28,12 @@ class PettingZooBase(BaseEnvironment):
         self.info_spec: Dict[str, Any] = {}
 
     def reset(self) -> ResetReturn:
-        """Resets the env."""
-        # Reset the environment
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
+        # Reset the underlying environment
         observations = self._environment.reset()  # type: ignore
 
         # Global state
@@ -44,7 +48,14 @@ class PettingZooBase(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
-        """Steps in env."""
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations and info.
+        """
         # Step the environment
         observations, rewards, terminals, truncations, _ = self._environment.step(actions)
 
@@ -57,6 +68,14 @@ class PettingZooBase(BaseEnvironment):
         return observations, rewards, terminals, truncations, info
 
     def _add_zero_obs_for_missing_agent(self, observations: Observations) -> Observations:
+        """TODO
+
+        Args:
+            observations (Observations): _description_
+
+        Returns:
+            Observations: _description_
+        """
         for agent in self._agents:
             if agent not in observations:
                 observations[agent] = np.zeros(
@@ -68,9 +87,30 @@ class PettingZooBase(BaseEnvironment):
     def _convert_observations(
         self, observations: Dict[str, np.ndarray], done: bool
     ) -> Dict[str, np.ndarray]:
-        """Convert observations"""
+        """TODO
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            done (bool): _description_
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         raise NotImplementedError
 
     def _create_state_representation(self, observations: Dict[str, np.ndarray]) -> np.ndarray:
-        """Create global state representation from agent observations."""
+        """Create global state representation from agent observations.
+
+        Args:
+            observations (Dict[str, np.ndarray]): Observations from the agents.
+
+        Raises:
+            NotImplementedError: Abstract class.
+
+        Returns:
+            np.ndarray: Global state representation.
+        """
         raise NotImplementedError

@@ -30,6 +30,11 @@ class SMACv1(BaseEnvironment):
         self,
         map_name: str,
     ):
+        """Constructor.
+
+        Args:
+            map_name (str): _description_
+        """
         self._environment = StarCraft2Env(map_name=map_name)
         self.possible_agents = [f"agent_{n}" for n in range(self._environment.n_agents)]
 
@@ -52,7 +57,11 @@ class SMACv1(BaseEnvironment):
         self.max_episode_length = self._environment.episode_limit
 
     def reset(self) -> ResetReturn:
-        """Resets the env."""
+        """Reset the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         # Reset the environment
         self._environment.reset()
         self._done = False
@@ -71,7 +80,14 @@ class SMACv1(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
-        """Step in env."""
+        """Step the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): _description_
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         # Convert dict of actions to list for SMAC
         smac_actions = []
         for agent in self.possible_agents:
@@ -100,7 +116,11 @@ class SMACv1(BaseEnvironment):
         return observations, rewards, terminals, truncations, info
 
     def _get_legal_actions(self) -> List[np.ndarray]:
-        """Get legal actions from the environment."""
+        """Get the legal actions for each agent.
+
+        Returns:
+            List[np.ndarray]: the legal actions for each agent.
+        """
         legal_actions = []
         for i, _ in enumerate(self.possible_agents):
             legal_actions.append(

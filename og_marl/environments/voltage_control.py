@@ -13,7 +13,7 @@ class VoltageControlEnv(BaseEnvironment):
     """Environment wrapper for MAPDN environment."""
 
     def __init__(self) -> None:
-        """Constructor for VoltageControl."""
+        """Constructor."""
         self._environment = VoltageControl()
         self.possible_agents = [
             f"agent_{agent_id}" for agent_id in range(self._environment.get_num_of_agents())
@@ -35,7 +35,12 @@ class VoltageControlEnv(BaseEnvironment):
         }
 
     def reset(self) -> ResetReturn:
-        # Reset the environment
+        """Resets the environment.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
+        # Reset the underlying environment
         observations, state = self._environment.reset()
 
         # Global state
@@ -52,7 +57,14 @@ class VoltageControlEnv(BaseEnvironment):
         return observations, info
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
-        """Steps in env."""
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations and info.
+        """
         actions = self._preprocess_actions(actions)
 
         # Step the environment
@@ -83,6 +95,14 @@ class VoltageControlEnv(BaseEnvironment):
         return next_observations, rewards, terminals, truncations, info
 
     def _preprocess_actions(self, actions: Dict[str, np.ndarray]) -> np.ndarray:
+        """TODO
+
+        Args:
+            actions (Dict[str, np.ndarray]): _description_
+
+        Returns:
+            np.ndarray: _description_
+        """
         concat_action = []
         for agent in self.possible_agents:
             concat_action.append(actions[agent])
@@ -90,6 +110,15 @@ class VoltageControlEnv(BaseEnvironment):
         return concat_action  # type: ignore
 
     def _convert_observations(self, observations: List, done: bool) -> Observations:
+        """Converts the observations to a dictionary format..
+
+        Args:
+            observations (List): _description_
+            done (bool): _description_
+
+        Returns:
+            Observations: _description_
+        """
         dict_observations = {}
         for i, agent in enumerate(self.possible_agents):
             obs = np.array(observations[i], "float32")

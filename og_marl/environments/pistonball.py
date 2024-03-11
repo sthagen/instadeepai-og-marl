@@ -31,6 +31,11 @@ class Pistonball(PettingZooBase):
     """Environment wrapper for PettingZoo MARL environments."""
 
     def __init__(self, n_pistons: int = 15):
+        """Constructor.
+
+        Args:
+            n_pistons (int, optional): number of pistons. Defaults to 15.
+        """
         self._environment = pistonball_v6.parallel_env(
             n_pistons=n_pistons, continuous=True, render_mode="rgb_array"
         )
@@ -50,6 +55,14 @@ class Pistonball(PettingZooBase):
         self._done = False
 
     def _create_state_representation(self, observations: Dict[str, np.ndarray]) -> np.ndarray:
+        """Create state representation from observations.
+
+        Args:
+            observations (Dict[str, np.ndarray]): observations from the environment.
+
+        Returns:
+            np.ndarray: state representation.
+        """
         if self._step_type == dm_env.StepType.FIRST:
             self._state_history = np.zeros((56, 88, 4), "float32")
 
@@ -68,6 +81,15 @@ class Pistonball(PettingZooBase):
     def _convert_observations(
         self, observations: Dict[str, np.ndarray], done: bool
     ) -> Dict[str, np.ndarray]:
+        """TODO OLT deprecated?
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            done (bool): _description_
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         olt_observations = {}
         for _, agent in enumerate(self._agents):
             agent_obs = np.expand_dims(observations[agent][50:, :], axis=-1)
@@ -82,18 +104,21 @@ class Pistonball(PettingZooBase):
         return olt_observations  # type: ignore
 
     def extra_spec(self) -> Dict[str, specs.BoundedArray]:
-        """Function returns extra spec (format) of the env.
+        """Gets the extra spec of the env.
 
         Returns:
-        -------
-            Dict[str, specs.BoundedArray]: extra spec.
-
+            Dict[str, specs.BoundedArray]: extra spec of the env.
         """
         state_spec = {"s_t": np.zeros((56, 88, 4), "float32")}  # four stacked frames
 
         return state_spec
 
     def action_spec(self) -> Dict[str, specs.BoundedArray]:
+        """Gets the action spec of the env.
+
+        Returns:
+            Dict[str, specs.BoundedArray]: action spec of the env for each agent.
+        """
         action_spec = {}
         for agent in self._agents:
             spec = specs.BoundedArray(
@@ -105,12 +130,10 @@ class Pistonball(PettingZooBase):
         return action_spec
 
     def observation_spec(self) -> Dict[str, OLT]:
-        """Observation spec.
+        """Gets the observation spec of the env.
 
         Returns:
-        -------
-            types.Observation: spec for environment.
-
+            Dict[str, OLT]: Observation spec. TODO OLT
         """
         observation_specs = {}
         for agent in self._agents:

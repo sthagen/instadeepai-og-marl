@@ -38,18 +38,35 @@ class BaseEnvironment:
         pass
 
     def reset(self) -> ResetReturn:
+        """Resets the environment.
+
+        Raises:
+            NotImplementedError: Abstract class.
+
+        Returns:
+            ResetReturn: the initial observations and info.
+        """
         raise NotImplementedError
 
     def step(self, actions: Dict[str, np.ndarray]) -> StepReturn:
+        """Steps the environment.
+
+        Args:
+            actions (Dict[str, np.ndarray]): Actions taken by the agents.
+
+        Raises:
+            NotImplementedError: Abstract class.
+
+        Returns:
+            StepReturn: the next observations, rewards, terminals, truncations, and info.
+        """
         raise NotImplementedError
 
     def get_stats(self) -> Dict:
-        """Return extra stats to be logged.
+        """Returns any extra stats to be logged.
 
         Returns:
-        -------
-            extra stats to be logged.
-
+            Dict: extra stats to be logged.
         """
         return {}
 
@@ -57,13 +74,10 @@ class BaseEnvironment:
         """Expose any other attributes of the underlying environment.
 
         Args:
-        ----
-            name (str): attribute.
+            name (str): Name of the attribute.
 
         Returns:
-        -------
-            Any: return attribute from env or underlying env.
-
+            Any: The attribute.
         """
         if hasattr(self.__class__, name):
             return self.__getattribute__(name)
