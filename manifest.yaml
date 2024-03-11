@@ -14,7 +14,7 @@ spec:
   operator: tf
   image: og-marl
   command: wandb agent off-the-grid-marl-team/og-marl-baselines/m5wro67c
-  # command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6
+  # command: wandb agent off-the-grid-marl-team/og-marl-baselines/i87akim6 
 
   types:
     Worker:
