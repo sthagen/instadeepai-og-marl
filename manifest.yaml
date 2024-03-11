@@ -27,7 +27,7 @@ spec:
         # memory = cpus * ramRatio
         ramRatio: 3 
         accelerators: 
-          gpu:
+          gpu: 
             count: 0
             # mandatory (if gpus amount is > 0): gpu type wanted
             type: gpu
