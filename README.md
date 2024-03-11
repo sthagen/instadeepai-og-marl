@@ -59,11 +59,17 @@ Download environment dependencies. We will use SMACv1 in this example.
 
 Download a dataset.
 
-`python examples/download_vault.py --env=smac_v1 --scenario=3m`
+`python examples/download_dataset.py --env=smac_v1 --scenario=3m`
 
 Run a baseline. In this example we will run MAICQ.
 
 `python baselines/main.py --env=smac_v1 --scenario=3m --dataset=Good --system=maicq`
+
+## Dataset API
+
+We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
+
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
 
 ## Datasets 🎥
 
@@ -71,7 +77,6 @@ We have generated datasets on a diverse set of popular MARL environments. A list
 
 <div class="collage">
   <div class="row" align="center">
-<!--     <img src="docs/assets/smac.png" alt="SMAC v1" width="16%"/> -->
     <img src="docs/assets/smacv2.png" alt="SMAC v2" width="16%"/>
     <img src="docs/assets/pistonball.png" alt="Pistonball" width="16%"/>
     <img src="docs/assets/coop_pong.png" alt="Cooperative Pong" width="16%"/>
@@ -109,15 +114,8 @@ We are in the process of migrating our datasets from TF Records to Flashbax Vaul
 | 🔌Voltage Control | case33_3min_final | 6 | Cont. | Vector | Dense | Homog | [source](https://github.com/Future-Power-Networks/MAPDN) |
 | 🔴MPE | simple_adversary | 3 | Discrete. | Vector | Dense | Competitive | [source](https://pettingzoo.farama.org/environments/mpe/simple_adversary/) |
 
-## Dataset API
-
-We provide a simple demonstrative notebook of how to use OG-MARL's dataset API here:
-
-[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/instadeepai/og-marl/blob/main/examples/dataset_api_demo.ipynb)
-
-
 ### Dataset and Vault Locations
-For OG-MARL's systems, we require the following dataset storage structure:
+For OG-MARL's systems, we require the following dataset file structure:
 
 ```
 examples/
@@ -133,19 +131,6 @@ vaults/
         |_> ...
     |_> smac_v2/
         |_> terran_5_vs_5.vlt/
-        |   |_> Good/
-        |   |_> Medium/
-        |   |_> Poor/
-        |_> ...
-datasets/
-    |_> smac_v1/
-        |_> 3m/
-        |   |_> Good/
-        |   |_> Medium/
-        |   |_> Poor/
-        |_> ...
-    |_> smac_v2/
-        |_> terran_5_vs_5/
         |   |_> Good/
         |   |_> Medium/
         |   |_> Poor/
