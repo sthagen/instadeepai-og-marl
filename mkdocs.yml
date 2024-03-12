@@ -42,6 +42,7 @@ nav:
   - Updates: 'updates.md'
   - API Reference: 'api.md'
 
+
 markdown_extensions:
   - attr_list
   - md_in_html
@@ -55,7 +56,7 @@ markdown_extensions:
       relative_path: docs
   - toc:
       permalink: "#"
-      toc_depth: 3
+      toc_depth: 4
   - pymdownx.highlight:
       linenums: true
   - def_list
@@ -72,23 +73,23 @@ copyright: InstaDeep © 2022 Copyright, all rights reserved.
 
 # Plugins
 plugins:
+  - search
+  - autorefs
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
           options:
             docstring_style: google
-            merge_init_into_class: yes
-            show_submodules: no
-          selection:
-            inherited_members: false
-          rendering:
-            show_source: false
-            members_order: source
-            show_if_no_docstring: true
-            show_signature: true
-            show_signature_annotations: true
-            show_root_full_path: false
+            merge_init_into_class: false
             show_root_heading: true
-            merge_init_into_class: true
+            show_source: false
+            show_if_no_docstring: false
+            show_signature: false
+            show_signature_annotations: false
+            show_root_full_path: false
             docstring_section_style: spacy
+            members_order: source
+            heading_level: 4
+          selection:
+            inherited_members: true
