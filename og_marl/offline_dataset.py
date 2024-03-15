@@ -26,7 +26,6 @@ from chex import Array
 from flashbax.vault import Vault
 from git import Optional
 
-
 VAULT_INFO = {
     "smac_v1": {
         "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
@@ -139,11 +138,12 @@ def calculate_returns(
     Returns:
         Array: jnp array of returns for each episode.
     """
-    # Experience is of dimension of (1, T, N, *E)
-    # We want all the time data, but just from one agent
-    experience_one_agent = jax.tree_map(lambda x: x[0, :, 0, ...], experience)
+    # Experience is of dimension of (B, T, N, *E)
+    # We want all batch and time data, but just from one agent
+    experience_one_agent = jax.tree_map(lambda x: x[:, :, 0, ...], experience)
     rewards = experience_one_agent[reward_key]
-    terminals = experience_one_agent[terminal_key]
+    # Ensure same dtype
+    terminals = jnp.asarray(experience_one_agent[terminal_key], dtype=rewards[0].dtype)
 
     def sum_rewards(terminals: Array, rewards: Array) -> Array:
         def scan_fn(carry: Array, inputs: Array) -> Array:
@@ -167,10 +167,15 @@ def calculate_returns(
                 rewards,
             ),
         )
-        return cumulative_rewards[terminals == 1]
+        return cumulative_rewards
 
-    episode_returns = sum_rewards(terminals, rewards)
-    return episode_returns
+    cumulative_rewards = jax.vmap(sum_rewards)(terminals, rewards)
+
+    # Need to manually construct a single array of returns, otherwise may be ragged.
+    extracted_returns = jnp.concatenate(
+        [cumulative_rewards[x][terminals[x] == 1] for x in range(terminals.shape[0])]
+    )
+    return extracted_returns
 
 
 def analyse_vault(
@@ -178,6 +183,8 @@ def analyse_vault(
     vault_uids: Optional[List[str]] = None,
     rel_dir: str = "vaults",
     visualise: bool = False,
+    reward_key: str = "rewards",
+    terminal_key: str = "terminals",
 ) -> Dict[str, Array]:
     """Analyse a vault by computing the returns of each dataset quality.
 
@@ -203,7 +210,11 @@ def analyse_vault(
     for uid in vault_uids:
         vlt = Vault(vault_name=vault_name, rel_dir=rel_dir, vault_uid=uid)
         exp = vlt.read().experience
-        uid_returns = calculate_returns(exp)
+        uid_returns = calculate_returns(
+            exp,
+            reward_key=reward_key,
+            terminal_key=terminal_key,
+        )
         all_uid_returns[uid] = uid_returns
 
     if visualise:
