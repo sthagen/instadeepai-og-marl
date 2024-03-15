@@ -15,8 +15,8 @@
 """Implementation of QMIX+CQL"""
 from typing import Any, Dict, Optional
 
-import tensorflow as tf
 import sonnet as snt
+import tensorflow as tf
 from chex import Numeric
 
 from og_marl.environments.base import BaseEnvironment
@@ -56,6 +56,24 @@ class QMIXCQLSystem(QMIXSystem):
         observation_embedding_network: Optional[snt.Module] = None,
         state_embedding_network: Optional[snt.Module] = None,
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            num_ood_actions (int, optional): _description_. Defaults to 10.
+            cql_weight (float, optional): _description_. Defaults to 5.0.
+            linear_layer_dim (int, optional): _description_. Defaults to 64.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 64.
+            mixer_embed_dim (int, optional): _description_. Defaults to 32.
+            mixer_hyper_dim (int, optional): _description_. Defaults to 64.
+            discount (float, optional): _description_. Defaults to 0.99.
+            target_update_period (int, optional): _description_. Defaults to 200.
+            learning_rate (float, optional): _description_. Defaults to 3e-4.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to False.
+            observation_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+            state_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+        """
         super().__init__(
             environment,
             logger,
@@ -77,6 +95,15 @@ class QMIXCQLSystem(QMIXSystem):
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, train_step: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            train_step (int): _description_
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)

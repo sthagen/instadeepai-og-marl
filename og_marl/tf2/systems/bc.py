@@ -10,6 +10,7 @@ from chex import Numeric
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.replay_buffers import Experience
+from og_marl.tf2.networks import IdentityNetwork
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -19,7 +20,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.tf2.networks import IdentityNetwork
 
 
 class DicreteActionBehaviourCloning(BaseMARLSystem):
@@ -36,6 +36,18 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         add_agent_id_to_obs: bool = True,
         observation_embedding_network: Optional[snt.Module] = None,
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            linear_layer_dim (int, optional): _description_. Defaults to 100.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 100.
+            discount (float, optional): _description_. Defaults to 0.99.
+            learning_rate (float, optional): _description_. Defaults to 1e-3.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to True.
+            observation_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+        """
         super().__init__(
             environment, logger, discount=discount, add_agent_id_to_obs=add_agent_id_to_obs
         )
@@ -78,6 +90,16 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            legal_actions (Optional[Dict[str, np.ndarray]], optional): _description_. Defaults to None.
+            explore (bool, optional): _description_. Defaults to True.
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         observations, legal_actions = tree.map_structure(
             tf.convert_to_tensor, (observations, legal_actions)
         )
@@ -97,6 +119,16 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         rnn_states: Dict[str, tf.Tensor],
         legal_actions: Optional[Dict[str, tf.Tensor]] = None,
     ) -> Tuple[Dict[str, tf.Tensor], Dict[str, tf.Tensor]]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, tf.Tensor]): _description_
+            rnn_states (Dict[str, tf.Tensor]): _description_
+            legal_actions (Optional[Dict[str, tf.Tensor]], optional): _description_. Defaults to None.
+
+        Returns:
+            Tuple[Dict[str, tf.Tensor], Dict[str, tf.Tensor]]: _description_
+        """
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -125,11 +157,27 @@ class DicreteActionBehaviourCloning(BaseMARLSystem):
         return actions, next_rnn_states
 
     def train_step(self, experience: Experience) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            experience (Experience): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         logs = self._tf_train_step(experience)
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the relevant quantities
         observations = experience["observations"]
         actions = experience["actions"]

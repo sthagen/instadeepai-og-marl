@@ -18,6 +18,8 @@ class QMixer(snt.Module):
     ):
         """Initialise QMIX mixing network
 
+        OLD:
+
         Args:
         ----
             num_agents: Number of agents in the environment
@@ -26,6 +28,11 @@ class QMixer(snt.Module):
                 of the mixer.
             hypernet_embed: Number of units in the hyper network
 
+        Args:
+            num_agents (int): _description_
+            embed_dim (int, optional): _description_. Defaults to 32.
+            hypernet_embed (int, optional): _description_. Defaults to 64.
+            non_monotonic (bool, optional): _description_. Defaults to False.
         """
         super().__init__()
         self.num_agents = num_agents
@@ -52,7 +59,15 @@ class QMixer(snt.Module):
         self.V = snt.Sequential([snt.Linear(self.embed_dim), tf.nn.relu, snt.Linear(1)])
 
     def __call__(self, agent_qs: Tensor, states: Tensor) -> Tensor:
-        """Forward method."""
+        """_summary_
+
+        Args:
+            agent_qs (Tensor): _description_
+            states (Tensor): _description_
+
+        Returns:
+            Tensor: _description_
+        """
         B = agent_qs.shape[0]  # batch size
         state_dim = states.shape[2:]
 
@@ -87,7 +102,14 @@ class QMixer(snt.Module):
         return q_tot
 
     def k(self, states: Tensor) -> Tensor:
-        """Method used by MAICQ."""
+        """_summary_
+
+        Args:
+            states (Tensor): _description_
+
+        Returns:
+            Tensor: _description_
+        """
         B, T = states.shape[:2]
 
         w1 = tf.math.abs(self.hyper_w_1(states))
@@ -103,10 +125,19 @@ class QMixer(snt.Module):
 @snt.allow_empty_variables
 class IdentityNetwork(snt.Module):
     def __init__(self) -> None:
+        """_summary_"""
         super().__init__()
         return
 
     def __call__(self, x: Tensor) -> Tensor:
+        """_summary_
+
+        Args:
+            x (Tensor): _description_
+
+        Returns:
+            Tensor: _description_
+        """
         return x
 
 
@@ -114,6 +145,12 @@ class CNNEmbeddingNetwork(snt.Module):
     def __init__(
         self, output_channels: Sequence[int] = (8, 16), kernel_sizes: Sequence[int] = (3, 2)
     ) -> None:
+        """_summary_
+
+        Args:
+            output_channels (Sequence[int], optional): _description_. Defaults to (8, 16).
+            kernel_sizes (Sequence[int], optional): _description_. Defaults to (3, 2).
+        """
         super().__init__()
         assert len(output_channels) == len(kernel_sizes)
 
@@ -132,6 +169,12 @@ class CNNEmbeddingNetwork(snt.Module):
         being the width, height and channel dimensions of the input.
 
         The output shape is then given as (B,T,N,Embed)
+
+        Args:
+            x (Tensor): _description_
+
+        Returns:
+            Tensor: _description_
         """
         leading_dims = x.shape[:-3]
         trailing_dims = x.shape[-3:]  # W,H,C

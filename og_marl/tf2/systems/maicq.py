@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Implementation of MAICQ"""
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import sonnet as snt
@@ -24,6 +24,7 @@ from tensorflow import Tensor
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
+from og_marl.tf2.networks import IdentityNetwork
 from og_marl.tf2.systems.qmix import QMIXSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -34,7 +35,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.tf2.networks import IdentityNetwork
 
 
 class MAICQSystem(QMIXSystem):
@@ -58,6 +58,22 @@ class MAICQSystem(QMIXSystem):
         observation_embedding_network: Optional[snt.Module] = None,
         state_embedding_network: Optional[snt.Module] = None,
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            icq_advantages_beta (float, optional): _description_. Defaults to 0.1.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 64.
+            mixer_embed_dim (int, optional): _description_. Defaults to 32.
+            mixer_hyper_dim (int, optional): _description_. Defaults to 64.
+            discount (float, optional): _description_. Defaults to 0.99.
+            target_update_period (int, optional): _description_. Defaults to 200.
+            learning_rate (float, optional): _description_. Defaults to 3e-4.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to False.
+            observation_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+            state_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+        """
         super().__init__(
             environment,
             logger,
@@ -109,6 +125,16 @@ class MAICQSystem(QMIXSystem):
         legal_actions: Dict[str, np.ndarray],
         explore: bool = False,
     ) -> Dict[str, np.ndarray]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            legal_actions (Dict[str, np.ndarray]): _description_
+            explore (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         observations = tree.map_structure(tf.convert_to_tensor, observations)
         actions, next_rnn_states = self._tf_select_actions(
             observations, legal_actions, self._rnn_states
@@ -125,6 +151,16 @@ class MAICQSystem(QMIXSystem):
         legal_actions: Dict[str, Tensor],
         rnn_states: Dict[str, Tensor],
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, Tensor]): _description_
+            legal_actions (Dict[str, Tensor]): _description_
+            rnn_states (Dict[str, Tensor]): _description_
+
+        Returns:
+            Tuple[Dict[str, Tensor], Dict[str, Tensor]]: _description_
+        """
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -154,6 +190,15 @@ class MAICQSystem(QMIXSystem):
         train_step_ctr: int,
         experience: Dict[str, Any],
     ) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            train_step_ctr (int): _description_
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)

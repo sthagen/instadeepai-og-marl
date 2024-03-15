@@ -24,9 +24,19 @@ import wandb
 
 class BaseLogger:
     def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
+        """_summary_
+
+        Args:
+            logs (Dict[str, Numeric]): _description_
+            force (bool, optional): _description_. Defaults to False.
+
+        Raises:
+            NotImplementedError: _description_
+        """
         raise NotImplementedError
 
     def close(self) -> None:
+        """_summary_"""
         return
 
 
@@ -35,11 +45,22 @@ class TerminalLogger(BaseLogger):
         self,
         log_every: int = 2,  # seconds
     ):
+        """_summary_
+
+        Args:
+            log_every (int, optional): _description_. Defaults to 2.
+        """
         self._log_every = log_every
         self._ctr = 0
         self._last_log = time.time()
 
     def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
+        """_summary_
+
+        Args:
+            logs (Dict[str, Numeric]): _description_
+            force (bool, optional): _description_. Defaults to False.
+        """
         if time.time() - self._last_log > self._log_every or force:
             for key, log in logs.items():
                 print(f"{key}: {float(log)} |", end=" ")
@@ -61,6 +82,14 @@ class WandbLogger(BaseLogger):
         entity: Optional[str] = None,
         log_every: int = 2,  # seconds
     ):
+        """_summary_
+
+        Args:
+            config (Dict, optional): _description_. Defaults to {}.
+            notes (str, optional): _description_. Defaults to "".
+            tags (List, optional): _description_. Defaults to ["default"].
+            log_every (int, optional): _description_. Defaults to 2.
+        """
         wandb.init(project=project, notes=notes, tags=tags, entity=entity, config=config)
 
         self._log_every = log_every
@@ -68,6 +97,12 @@ class WandbLogger(BaseLogger):
         self._last_log = time.time()
 
     def write(self, logs: Dict[str, Numeric], force: bool = False) -> None:
+        """_summary_
+
+        Args:
+            logs (Dict[str, Numeric]): _description_
+            force (bool, optional): _description_. Defaults to False.
+        """
         if time.time() - self._last_log > self._log_every or force:
             wandb.log(logs)
 
@@ -81,6 +116,7 @@ class WandbLogger(BaseLogger):
         self._ctr += 1
 
     def close(self) -> None:
+        """_summary_"""
         wandb.finish()
 
 
@@ -112,6 +148,17 @@ class JsonWriter:
         file_name: str = "metrics.json",
         save_to_wandb: bool = False,
     ):
+        """_summary_
+
+        Args:
+            path (str): _description_
+            algorithm_name (str): _description_
+            task_name (str): _description_
+            environment_name (str): _description_
+            seed (int): _description_
+            file_name (str, optional): _description_. Defaults to "metrics.json".
+            save_to_wandb (bool, optional): _description_. Defaults to False.
+        """
         self.path = path
         self.file_name = file_name
         self.run_data: Dict[str, Any] = {"absolute_metrics": {}}
@@ -149,12 +196,10 @@ class JsonWriter:
         """Writes a step to the json reporting file
 
         Args:
-        ----
-            timestep (int): the current environment timestep
-            key (str): the metric that should be logged
-            value (str): the value of the metric that should be logged
-            evaluation_step (int): the evaluation step
-
+            timestep (int): The current environment timestep.
+            key (str): The metric that should be logged.
+            value (float): The value of the metric that should be logged.
+            evaluation_step (Optional[int], optional): The evaluation step.
         """
         logging_prefix, *metric_key = key.split("/")
         metric_key = "/".join(metric_key)
@@ -178,5 +223,6 @@ class JsonWriter:
             json.dump(self.data, f, indent=4)
 
     def close(self) -> None:
+        """_summary_"""
         if self._save_to_wandb:
             wandb.save(f"{self.path}/{self.file_name}")

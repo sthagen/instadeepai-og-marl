@@ -35,6 +35,15 @@ class FlashbaxReplayBuffer:
         sample_period: int = 1,
         seed: int = 42,
     ):
+        """_summary_
+
+        Args:
+            sequence_length (int): _description_
+            max_size (int, optional): _description_. Defaults to 50_000.
+            batch_size (int, optional): _description_. Defaults to 32.
+            sample_period (int, optional): _description_. Defaults to 1.
+            seed (int, optional): _description_. Defaults to 42.
+        """
         self._sequence_length = sequence_length
         self._max_size = max_size
         self._batch_size = batch_size
@@ -64,6 +73,16 @@ class FlashbaxReplayBuffer:
         truncations: Dict[str, np.ndarray],
         infos: Dict[str, Any],
     ) -> None:
+        """_summary_
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            actions (Dict[str, np.ndarray]): _description_
+            rewards (Dict[str, np.ndarray]): _description_
+            terminals (Dict[str, np.ndarray]): _description_
+            truncations (Dict[str, np.ndarray]): _description_
+            infos (Dict[str, Any]): _description_
+        """
         timestep = {
             "observations": observations,
             "actions": actions,
@@ -82,6 +101,11 @@ class FlashbaxReplayBuffer:
         self._buffer_state = self._buffer_add_fn(self._buffer_state, timestep)
 
     def sample(self) -> Experience:
+        """_summary_
+
+        Returns:
+            Experience: _description_
+        """
         self._rng_key, sample_key = jax.random.split(self._rng_key, 2)
         batch = self._buffer_sample_fn(self._buffer_state, sample_key)
         return batch.experience  # type: ignore
@@ -89,6 +113,17 @@ class FlashbaxReplayBuffer:
     def populate_from_vault(
         self, env_name: str, scenario_name: str, dataset_name: str, rel_dir: str = "vaults"
     ) -> bool:
+        """_summary_
+
+        Args:
+            env_name (str): _description_
+            scenario_name (str): _description_
+            dataset_name (str): _description_
+            rel_dir (str, optional): _description_. Defaults to "vaults".
+
+        Returns:
+            bool: _description_
+        """
         try:
             self._buffer_state = Vault(
                 vault_name=f"{env_name}/{scenario_name}.vlt",

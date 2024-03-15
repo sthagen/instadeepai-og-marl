@@ -1,6 +1,6 @@
-<!-- ::: og_marl.environments
-    options:
-        heading_level: 1 -->
+::: og_marl.environments.base.BaseEnvironment
+
+---
 
 ::: og_marl.environments.coop_pong.CooperativePong
 ---
@@ -44,8 +44,4 @@
 ::: og_marl.environments.wrappers.ExperienceRecorder
 ---
 ::: og_marl.environments.wrappers.Dtype
----
-
-
-::: og_marl.environments.base.BaseEnvironment
 ---

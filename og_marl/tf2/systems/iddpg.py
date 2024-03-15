@@ -38,12 +38,21 @@ from og_marl.tf2.utils import (
 
 
 class StateAndActionCritic(snt.Module):
+    """_summary_"""
+
     def __init__(
         self,
         num_agents: int,
         num_actions: int,
         preprocess_network: Optional[snt.Module] = None,
     ):
+        """_summary_
+
+        Args:
+            num_agents (int): _description_
+            num_actions (int): _description_
+            preprocess_network (Optional[snt.Module], optional): _description_. Defaults to None.
+        """
         self.N = num_agents
         self.A = num_actions
 
@@ -68,8 +77,16 @@ class StateAndActionCritic(snt.Module):
     ) -> Tensor:
         """Forward pass of critic network.
 
+        Todo:
         states [T,B,S]
         agent_actions [T,B,N,A]: the actions the agent took.
+
+        Args:
+            states (Tensor): _description_
+            agent_actions (Tensor): _description_
+
+        Returns:
+            Tensor: _description_
         """
         if self._preprocess_network is not None:
             embeds = []
@@ -105,6 +122,20 @@ class IDDPGSystem(BaseMARLSystem):
         add_agent_id_to_obs: bool = True,
         random_exploration_timesteps: int = 50_000,  # for online training
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            linear_layer_dim (int, optional): _description_. Defaults to 100.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 100.
+            discount (float, optional): _description_. Defaults to 0.99.
+            target_update_rate (float, optional): _description_. Defaults to 0.005.
+            critic_learning_rate (float, optional): _description_. Defaults to 3e-4.
+            policy_learning_rate (float, optional): _description_. Defaults to 1e-3.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to True.
+            random_exploration_timesteps (int, optional): _description_. Defaults to 50_000.
+        """
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
         )
@@ -166,6 +197,16 @@ class IDDPGSystem(BaseMARLSystem):
         legal_actions: Optional[Dict[str, np.ndarray]] = None,
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            legal_actions (Optional[Dict[str, np.ndarray]], optional): _description_. Defaults to None.
+            explore (bool, optional): _description_. Defaults to True.
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         actions, next_rnn_states = self._tf_select_actions(observations, self._rnn_states, explore)
         self._rnn_states = next_rnn_states
         return tree.map_structure(  # type: ignore
@@ -179,6 +220,16 @@ class IDDPGSystem(BaseMARLSystem):
         rnn_states: Dict[str, Tensor],
         explore: bool = False,
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, Tensor]): _description_
+            rnn_states (Dict[str, Tensor]): _description_
+            explore (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            Tuple[Dict[str, Tensor], Dict[str, Tensor]]: _description_
+        """
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -210,11 +261,27 @@ class IDDPGSystem(BaseMARLSystem):
         self,
         experience: Experience,
     ) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            experience (Experience): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         logs = self._tf_train_step(experience)
         return logs  # type: ignore
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)
@@ -342,7 +409,12 @@ class IDDPGSystem(BaseMARLSystem):
         online_variables: Sequence[Variable],
         target_variables: Sequence[Variable],
     ) -> None:
-        """Update the target networks."""
+        """Update the target networks.
+
+        Args:
+            online_variables (Sequence[Variable]): _description_
+            target_variables (Sequence[Variable]): _description_
+        """
         tau = self._target_update_rate
         for src, dest in zip(online_variables, target_variables):
             dest.assign(dest * (1.0 - tau) + src * tau)

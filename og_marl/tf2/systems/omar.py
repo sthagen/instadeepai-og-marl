@@ -53,6 +53,20 @@ class OMARSystem(IDDPGCQLSystem):
         omar_sigma: float = 2.0,  # OMAR
         omar_coe: float = 0.7,  # OMAR
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            linear_layer_dim (int, optional): _description_. Defaults to 64.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 64.
+            discount (float, optional): _description_. Defaults to 0.99.
+            target_update_rate (float, optional): _description_. Defaults to 0.005.
+            critic_learning_rate (float, optional): _description_. Defaults to 3e-4.
+            policy_learning_rate (float, optional): _description_. Defaults to 1e-3.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to False.
+            num_ood_actions (int, optional): _description_. Defaults to 10.
+        """
         super().__init__(
             environment=environment,
             logger=logger,
@@ -77,6 +91,14 @@ class OMARSystem(IDDPGCQLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N,A)

@@ -1,18 +1,4 @@
-!!! tip
-    tips
-
-!!! info
-    info
-
-??? hidden
-    hidden info
-
-??? success
-    green tick
-
-??? warning
-    warning!
-
+# Systems
 
 ::: og_marl.tf2.systems.base.BaseMARLSystem
 ---

@@ -14,7 +14,7 @@
 
 """Implementation of independent Q-learning (DRQN style)"""
 import copy
-from typing import Any, Dict, Sequence, Tuple, Optional
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import sonnet as snt
@@ -27,6 +27,7 @@ from tensorflow import Tensor, Variable
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
 from og_marl.replay_buffers import Experience
+from og_marl.tf2.networks import IdentityNetwork
 from og_marl.tf2.systems.base import BaseMARLSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -37,7 +38,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.tf2.networks import IdentityNetwork
 
 
 class IDRQNSystem(BaseMARLSystem):
@@ -58,6 +58,21 @@ class IDRQNSystem(BaseMARLSystem):
         add_agent_id_to_obs: bool = False,
         observation_embedding_network: Optional[snt.Module] = None,
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            linear_layer_dim (int, optional): _description_. Defaults to 64.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 64.
+            discount (float, optional): _description_. Defaults to 0.99.
+            target_update_period (int, optional): _description_. Defaults to 200.
+            learning_rate (float, optional): _description_. Defaults to 3e-4.
+            eps_min (float, optional): _description_. Defaults to 0.05.
+            eps_decay_timesteps (int, optional): _description_. Defaults to 50_000.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to False.
+            observation_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+        """
         super().__init__(
             environment, logger, add_agent_id_to_obs=add_agent_id_to_obs, discount=discount
         )
@@ -112,6 +127,16 @@ class IDRQNSystem(BaseMARLSystem):
         legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            legal_actions (Dict[str, np.ndarray]): _description_
+            explore (bool, optional): _description_. Defaults to True.
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         if explore:
             self._env_step_ctr += 1.0
 
@@ -135,6 +160,18 @@ class IDRQNSystem(BaseMARLSystem):
         rnn_states: Dict[str, Tensor],
         explore: bool,
     ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+        """_summary_
+
+        Args:
+            env_step_ctr (int): _description_
+            observations (Dict[str, Tensor]): _description_
+            legal_actions (Dict[str, Tensor]): _description_
+            rnn_states (Dict[str, Tensor]): _description_
+            explore (bool): _description_
+
+        Returns:
+            Tuple[Dict[str, Tensor], Dict[str, Tensor]]: _description_
+        """
         actions = {}
         next_rnn_states = {}
         for i, agent in enumerate(self._environment.possible_agents):
@@ -181,6 +218,15 @@ class IDRQNSystem(BaseMARLSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            train_step_ctr (int): _description_
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
@@ -284,9 +330,23 @@ class IDRQNSystem(BaseMARLSystem):
         }
 
     def get_stats(self) -> Dict[str, Numeric]:
+        """_summary_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         return {"Epsilon": max(1.0 - self._env_step_ctr * self._eps_dec, self._eps_min)}
 
     def _apply_mask(self, loss: Tensor, mask: Tensor) -> Numeric:
+        """_summary_
+
+        Args:
+            loss (Tensor): _description_
+            mask (Tensor): _description_
+
+        Returns:
+            Numeric: _description_
+        """
         mask = tf.expand_dims(mask, axis=-1)
         mask = tf.broadcast_to(mask[:, :-1], loss.shape)
         loss = tf.reduce_sum(loss * mask) / tf.reduce_sum(mask)
@@ -298,7 +358,13 @@ class IDRQNSystem(BaseMARLSystem):
         online_variables: Sequence[Variable],
         target_variables: Sequence[Variable],
     ) -> None:
-        """Update the target networks."""
+        """Update the target networks.
+
+        Args:
+            train_step (int): _description_
+            online_variables (Sequence[Variable]): _description_
+            target_variables (Sequence[Variable]): _description_
+        """
         if train_step % self._target_update_period == 0:
             for src, dest in zip(online_variables, target_variables):
                 dest.assign(src)

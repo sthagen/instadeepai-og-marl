@@ -26,7 +26,6 @@ from chex import Array
 from flashbax.vault import Vault
 from git import Optional
 
-
 VAULT_INFO = {
     "smac_v1": {
         "3m": {"url": "https://s3.kao.instadeep.io/offline-marl-dataset/vaults/3m.zip"},
@@ -73,6 +72,13 @@ def download_and_unzip_vault(
     scenario_name: str,
     dataset_base_dir: str = "./vaults",
 ) -> None:
+    """_summary_
+
+    Args:
+        env_name (str): _description_
+        scenario_name (str): _description_
+        dataset_base_dir (str, optional): _description_. Defaults to "./vaults".
+    """
     if check_directory_exists_and_not_empty(f"{dataset_base_dir}/{env_name}/{scenario_name}.vlt"):
         print(f"Vault '{dataset_base_dir}/{env_name}/{scenario_name}' already exists.")
         return
@@ -111,6 +117,14 @@ def download_and_unzip_vault(
 
 
 def check_directory_exists_and_not_empty(path: str) -> bool:
+    """_summary_
+
+    Args:
+        path (str): _description_
+
+    Returns:
+        bool: _description_
+    """
     # Check if the directory exists
     if os.path.exists(path) and os.path.isdir(path):
         # Check if the directory is not empty
@@ -146,7 +160,26 @@ def calculate_returns(
     terminals = experience_one_agent[terminal_key]
 
     def sum_rewards(terminals: Array, rewards: Array) -> Array:
+        """_summary_
+
+        Args:
+            terminals (Array): _description_
+            rewards (Array): _description_
+
+        Returns:
+            Array: _description_
+        """
+
         def scan_fn(carry: Array, inputs: Array) -> Array:
+            """_summary_
+
+            Args:
+                carry (Array): _description_
+                inputs (Array): _description_
+
+            Returns:
+                Array: _description_
+            """
             terminal, reward = inputs
             new_carry = carry + reward
             new_carry = jax.lax.cond(

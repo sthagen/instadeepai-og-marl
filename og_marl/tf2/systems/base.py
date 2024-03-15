@@ -31,6 +31,14 @@ class BaseMARLSystem:
         discount: float = 0.99,
         add_agent_id_to_obs: bool = False,
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            discount (float, optional): _description_. Defaults to 0.99.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to False.
+        """
         self._environment = environment
         self._agents = environment.possible_agents
         self._logger = logger
@@ -40,10 +48,22 @@ class BaseMARLSystem:
         self._env_step_ctr = 0.0
 
     def get_stats(self) -> Dict[str, Numeric]:
+        """_summary_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         return {}
 
     def evaluate(self, num_eval_episodes: int = 4) -> Dict[str, Numeric]:
-        """Method to evaluate the system online (i.e. in the environment)."""
+        """Method to evaluate the system online (i.e. in the environment).
+
+        Args:
+            num_eval_episodes (int, optional): _description_. Defaults to 4.
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         episode_returns = []
         for _ in range(num_eval_episodes):
             self.reset()
@@ -80,7 +100,16 @@ class BaseMARLSystem:
         max_env_steps: int = int(1e6),
         train_period: int = 20,
     ) -> None:
-        """Method to train the system online."""
+        """Method to train the system online. TODO
+
+        Args:
+            replay_buffer (FlashbaxReplayBuffer): _description_
+            max_env_steps (int, optional): _description_. Defaults to int(1e6).
+            train_period (int, optional): _description_. Defaults to 20.
+
+        Returns:
+            _type_: _description_
+        """
         episodes = 0
         while True:  # breaks out when env_steps > max_env_steps
             self.reset()  # reset the system
@@ -187,6 +216,13 @@ class BaseMARLSystem:
 
         WARNING: make sure evaluate_every % log_every == 0 and log_every < evaluate_every,
         else you won't log evaluation.
+
+        Args:
+            replay_buffer (FlashbaxReplayBuffer): _description_
+            max_trainer_steps (int, optional): _description_. Defaults to int(1e5).
+            evaluate_every (int, optional): _description_. Defaults to 1000.
+            num_eval_episodes (int, optional): _description_. Defaults to 4.
+            json_writer (Optional[JsonWriter], optional): _description_. Defaults to None.
         """
         trainer_step_ctr = 0
         while trainer_step_ctr < max_trainer_steps:
@@ -251,7 +287,31 @@ class BaseMARLSystem:
         legal_actions: Dict[str, np.ndarray],
         explore: bool = True,
     ) -> Dict[str, np.ndarray]:
+        """_summary_
+
+        Args:
+            observations (Dict[str, np.ndarray]): _description_
+            legal_actions (Dict[str, np.ndarray]): _description_
+            explore (bool, optional): _description_. Defaults to True.
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            Dict[str, np.ndarray]: _description_
+        """
         raise NotImplementedError
 
     def train_step(self, batch: Experience) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            batch (Experience): _description_
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         raise NotImplementedError

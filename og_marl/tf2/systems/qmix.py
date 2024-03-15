@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """Implementation of QMIX"""
-from typing import Any, Dict, Tuple, Optional
-
 import copy
+from typing import Any, Dict, Optional, Tuple
+
 import sonnet as snt
 import tensorflow as tf
 from chex import Numeric
@@ -23,6 +23,7 @@ from tensorflow import Tensor
 
 from og_marl.environments.base import BaseEnvironment
 from og_marl.loggers import BaseLogger
+from og_marl.tf2.networks import IdentityNetwork, QMixer
 from og_marl.tf2.systems.idrqn import IDRQNSystem
 from og_marl.tf2.utils import (
     batch_concat_agent_id_to_obs,
@@ -32,7 +33,6 @@ from og_marl.tf2.utils import (
     switch_two_leading_dims,
     unroll_rnn,
 )
-from og_marl.tf2.networks import IdentityNetwork, QMixer
 
 
 class QMIXSystem(IDRQNSystem):
@@ -55,6 +55,23 @@ class QMIXSystem(IDRQNSystem):
         observation_embedding_network: Optional[snt.Module] = None,
         state_embedding_network: Optional[snt.Module] = None,
     ):
+        """_summary_
+
+        Args:
+            environment (BaseEnvironment): _description_
+            logger (BaseLogger): _description_
+            linear_layer_dim (int, optional): _description_. Defaults to 64.
+            recurrent_layer_dim (int, optional): _description_. Defaults to 64.
+            mixer_embed_dim (int, optional): _description_. Defaults to 32.
+            mixer_hyper_dim (int, optional): _description_. Defaults to 64.
+            discount (float, optional): _description_. Defaults to 0.99.
+            target_update_period (int, optional): _description_. Defaults to 200.
+            learning_rate (float, optional): _description_. Defaults to 3e-4.
+            eps_decay_timesteps (int, optional): _description_. Defaults to 50_000.
+            add_agent_id_to_obs (bool, optional): _description_. Defaults to False.
+            observation_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+            state_embedding_network (Optional[snt.Module], optional): _description_. Defaults to None.
+        """
         super().__init__(
             environment,
             logger,
@@ -82,6 +99,15 @@ class QMIXSystem(IDRQNSystem):
 
     @tf.function(jit_compile=True)  # NOTE: comment this out if using debugger
     def _tf_train_step(self, train_step_ctr: int, experience: Dict[str, Any]) -> Dict[str, Numeric]:
+        """_summary_
+
+        Args:
+            train_step_ctr (int): _description_
+            experience (Dict[str, Any]): _description_
+
+        Returns:
+            Dict[str, Numeric]: _description_
+        """
         # Unpack the batch
         observations = experience["observations"]  # (B,T,N,O)
         actions = experience["actions"]  # (B,T,N)
@@ -218,7 +244,18 @@ class QMIXSystem(IDRQNSystem):
         target_state_embeddings: Tensor,
         rewards: Tensor,
     ) -> Tuple[Tensor, Tensor, Tensor]:
-        """QMIX"""
+        """_summary_
+
+        Args:
+            chosen_action_qs (Tensor): _description_
+            target_max_qs (Tensor): _description_
+            state_embeddings (Tensor): _description_
+            target_state_embeddings (Tensor): _description_
+            rewards (Tensor): _description_
+
+        Returns:
+            Tuple[Tensor, Tensor, Tensor]: _description_
+        """
         # VDN
         # chosen_action_qs = tf.reduce_sum(chosen_action_qs, axis=2, keepdims=True)
         # target_max_qs = tf.reduce_sum(target_max_qs, axis=2, keepdims=True)
