@@ -1,6 +1,6 @@
 site_name: Off-the-Grid MARL
 site_author: InstaDeep Research
-site_url: https://instadeepai.github.io/_draft/og-marl/
+site_url: https://instadeepai.github.io/og-marl/
 site_dir: public
 
 theme:
