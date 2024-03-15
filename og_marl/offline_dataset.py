@@ -159,7 +159,7 @@ def calculate_returns(
 
         _, cumulative_rewards = jax.lax.scan(
             scan_fn,
-            jnp.zeros_like(terminals[0]),
+            jnp.zeros_like(terminals[0], dtype=terminals[0].dtype),
             (
                 # We shift the terminals one timestep rightwards,
                 # for our cumulative sum approach to work
