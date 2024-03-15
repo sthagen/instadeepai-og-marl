@@ -17,9 +17,11 @@ theme:
     - search.highlight # highlight search result
     - search.share # share button
     - search.suggest # smart suggestion
-    - toc.integrate
+    # - toc.integrate
     - toc.follow
     - content.code.annotate
+    - content.code.copy
+    - content.tooltips
     - navigation.tabs
     - navigation.top
   palette:
@@ -40,8 +42,11 @@ nav:
   - Home: 'index.md'
   - Baseline Results: 'baselines.md'
   - Updates: 'updates.md'
-  - API Reference: 'api.md'
-
+  - API Reference:
+      - Datasets: 'api/datasets.md'
+      - Environments: 'api/envs.md'
+      - Systems: 'api/systems.md'
+      - Types: 'api/types.md'
 
 markdown_extensions:
   - attr_list
@@ -55,13 +60,16 @@ markdown_extensions:
       base_path: ./
       relative_path: docs
   - toc:
-      permalink: "#"
+      permalink: "🔌"
       toc_depth: 4
   - pymdownx.highlight:
       linenums: true
   - def_list
   - admonition
+  - pymdownx.superfences
   - pymdownx.details
+  - pymdownx.magiclink
+
 
 # Git repo
 repo_name: instadeepai/og-marl
@@ -79,17 +87,26 @@ plugins:
       default_handler: python
       handlers:
         python:
+          import:
+          - https://docs.python.org/3/objects.inv
           options:
             docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
             merge_init_into_class: false
             show_root_heading: true
-            show_source: false
+            show_source: true
             show_if_no_docstring: false
-            show_signature: false
-            show_signature_annotations: false
+            # show_signature: true
+            # show_signature_annotations: false
             show_root_full_path: false
             docstring_section_style: spacy
             members_order: source
-            heading_level: 4
+            heading_level: 3
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            # separate_signature: true
+            signature_crossrefs: true
+            summary: true
           selection:
             inherited_members: true

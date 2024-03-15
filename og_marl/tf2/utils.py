@@ -20,7 +20,7 @@ from tensorflow import Module, Tensor
 
 
 def set_growing_gpu_memory() -> None:
-    """Solve gpu mem issues."""
+    """_summary_"""
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
     physical_devices = tf.config.list_physical_devices("GPU")
     if physical_devices:
@@ -29,6 +29,17 @@ def set_growing_gpu_memory() -> None:
 
 
 def gather(values: Tensor, indices: Tensor, axis: int = -1, keepdims: bool = False) -> Tensor:
+    """_summary_
+
+    Args:
+        values (Tensor): _description_
+        indices (Tensor): _description_
+        axis (int, optional): _description_. Defaults to -1.
+        keepdims (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        Tensor: _description_
+    """
     one_hot_indices = tf.one_hot(indices, depth=values.shape[axis])
     if len(values.shape) > 4:  # we have extra dim for distributional q-learning
         one_hot_indices = tf.expand_dims(one_hot_indices, axis=-1)
@@ -37,6 +48,14 @@ def gather(values: Tensor, indices: Tensor, axis: int = -1, keepdims: bool = Fal
 
 
 def switch_two_leading_dims(x: Tensor) -> Tensor:
+    """_summary_
+
+    Args:
+        x (Tensor): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     trailing_perm = []
     for i in range(2, len(x.shape)):
         trailing_perm.append(i)
@@ -45,6 +64,14 @@ def switch_two_leading_dims(x: Tensor) -> Tensor:
 
 
 def merge_batch_and_agent_dim_of_time_major_sequence(x: Tensor) -> Tensor:
+    """_summary_
+
+    Args:
+        x (Tensor): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     T, B, N = x.shape[:3]  # assume time major
     trailing_dims = x.shape[3:]
     x = tf.reshape(x, shape=(T, B * N, *trailing_dims))  # type: ignore
@@ -52,6 +79,14 @@ def merge_batch_and_agent_dim_of_time_major_sequence(x: Tensor) -> Tensor:
 
 
 def merge_time_batch_and_agent_dim(x: Tensor) -> Tensor:
+    """_summary_
+
+    Args:
+        x (Tensor): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     T, B, N = x.shape[:3]  # assume time major
     trailing_dims = x.shape[3:]
     x = tf.reshape(x, shape=(T * B * N, *trailing_dims))  # type: ignore
@@ -61,6 +96,17 @@ def merge_time_batch_and_agent_dim(x: Tensor) -> Tensor:
 def expand_time_batch_and_agent_dim_of_time_major_sequence(
     x: Tensor, T: int, B: int, N: int
 ) -> Tensor:
+    """_summary_
+
+    Args:
+        x (Tensor): _description_
+        T (int): _description_
+        B (int): _description_
+        N (int): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     TNB = x.shape[:1]  # assume time major
     assert TNB == T * B * N  # type: ignore
     trailing_dims = x.shape[1:]
@@ -69,6 +115,16 @@ def expand_time_batch_and_agent_dim_of_time_major_sequence(
 
 
 def expand_batch_and_agent_dim_of_time_major_sequence(x: Tensor, B: int, N: int) -> Tensor:
+    """_summary_
+
+    Args:
+        x (Tensor): _description_
+        B (int): _description_
+        N (int): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     T, NB = x.shape[:2]  # assume time major
     assert NB == B * N
     trailing_dims = x.shape[2:]
@@ -77,6 +133,16 @@ def expand_batch_and_agent_dim_of_time_major_sequence(x: Tensor, B: int, N: int)
 
 
 def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int) -> Tensor:
+    """_summary_
+
+    Args:
+        obs (Tensor): _description_
+        agent_id (int): _description_
+        N (int): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     is_vector_obs = len(obs.shape) == 1
 
     if is_vector_obs:
@@ -94,6 +160,16 @@ def concat_agent_id_to_obs(obs: Tensor, agent_id: int, N: int) -> Tensor:
 
 
 def unroll_rnn(rnn_network: Module, inputs: Tensor, resets: Tensor) -> Tensor:
+    """_summary_
+
+    Args:
+        rnn_network (Module): _description_
+        inputs (Tensor): _description_
+        resets (Tensor): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     T, B = inputs.shape[:2]
 
     outputs = []
@@ -114,6 +190,14 @@ def unroll_rnn(rnn_network: Module, inputs: Tensor, resets: Tensor) -> Tensor:
 
 
 def batch_concat_agent_id_to_obs(obs: Tensor) -> Tensor:
+    """_summary_
+
+    Args:
+        obs (Tensor): _description_
+
+    Returns:
+        Tensor: _description_
+    """
     B, T, N = obs.shape[:3]  # batch size, timedim, num_agents
     is_vector_obs = len(obs.shape) == 4
 
@@ -142,6 +226,15 @@ def batch_concat_agent_id_to_obs(obs: Tensor) -> Tensor:
 
 
 def batched_agents(agents, batch_dict):  # type: ignore
+    """_summary_
+
+    Args:
+        agents (_type_): _description_
+        batch_dict (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     batched_agents_dict: Dict[str, Any] = {
         "observations": [],
         "actions": [],

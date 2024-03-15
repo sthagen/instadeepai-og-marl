@@ -1,8 +1,8 @@
 from typing import Sequence
 
+import sonnet as snt
 import tensorflow as tf
 from tensorflow import Tensor
-import sonnet as snt
 
 
 class QMixer(snt.Module):
