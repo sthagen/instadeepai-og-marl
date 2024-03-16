@@ -33,7 +33,7 @@ RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -e . && \
     pip install flashbax==0.1.2 && \
-    pip install jumanji
+    pip install git+https://github.com/sash-a/jumanji
 
 # ENV SC2PATH /home/app/StarCraftII
 # RUN ./install_environments/smacv1.sh
