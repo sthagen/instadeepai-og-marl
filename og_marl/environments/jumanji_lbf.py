@@ -46,7 +46,7 @@ class JumanjiLBF(BaseEnvironment):
 
     """Environment wrapper for Jumanji environments."""
 
-    def __init__(self, scenario_name: str = "2s-8x8-2p-2f-coop", seed: int = 0) -> None:
+    def __init__(self, scenario_name: str = "8x8-2p-2f-coop", seed: int = 0) -> None:
         """Constructor."""
         self._environment = jumanji.make(
             "LevelBasedForaging-v0",
@@ -98,7 +98,7 @@ class JumanjiLBF(BaseEnvironment):
             agent: np.asarray(timestep.observation.action_mask[i], dtype=np.int32)
             for i, agent in enumerate(self.possible_agents)
         }
-        rewards = {agent: np.asarray(timestep.reward) for agent in self.possible_agents}
+        rewards = {agent: np.asarray(jnp.sum(timestep.reward)) for agent in self.possible_agents}
         terminals = {agent: np.asarray(timestep.last()) for agent in self.possible_agents}
         truncations = {agent: np.asarray(False) for agent in self.possible_agents}
 

@@ -159,12 +159,16 @@ class MAICQSystem(QMIXSystem):
         actions = experience["actions"]  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
-        truncations = experience["truncations"]  # (B,T,N)
-        terminals = experience["terminals"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
         legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state
         resets = tf.maximum(terminals, truncations)  # equivalent to logical 'or'
+
+        # # Force team reward NOTE if terminals are not all the same for agents, it will not train correctly
+        # rewards = tf.reduce_mean(rewards, axis=2, keepdims=True)
+        # terminals = tf.reduce_mean(terminals, axis=2, keepdims=True)
 
         # Get dims
         B, T, N, A = legal_actions.shape

@@ -91,8 +91,8 @@ class QMIXBCQSystem(QMIXSystem):
         actions = experience["actions"]  # (B,T,N)
         env_states = experience["infos"]["state"]  # (B,T,S)
         rewards = experience["rewards"]  # (B,T,N)
-        truncations = experience["truncations"]  # (B,T,N)
-        terminals = experience["terminals"]  # (B,T,N)
+        truncations = tf.cast(experience["truncations"], "float32")  # (B,T,N)
+        terminals = tf.cast(experience["terminals"], "float32")  # (B,T,N)
         legal_actions = experience["infos"]["legals"]  # (B,T,N,A)
 
         # When to reset the RNN hidden state

@@ -32,7 +32,8 @@ COPY setup.py .
 RUN echo "Installing requirements..."
 RUN pip install --quiet --upgrade pip setuptools wheel &&  \
     pip install -e . && \
-    pip install flashbax==0.1.2
+    pip install flashbax==0.1.2 && \
+    pip install jumanji
 
 # ENV SC2PATH /home/app/StarCraftII
 # RUN ./install_environments/smacv1.sh
@@ -42,7 +43,7 @@ RUN pip install --quiet --upgrade pip setuptools wheel &&  \
 # ENV SUPPRESS_GR_PROMPT 1
 # RUN ./install_environments/mamujoco.sh
 
-RUN ./install_environments/pettingzoo.sh
+# RUN ./install_environments/pettingzoo.sh
 
 # RUN ./install_environments/flatland.sh
 
